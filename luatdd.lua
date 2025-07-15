@@ -58,12 +58,14 @@ local function print_test_status (test_name, status)
    io.write(msg)
 end
 
-local function print_suite_status (suite, suite_passing)
+local function print_ste_status (ste, ste_passed, ste_failed, ste_passing)
    local msg
-   if suite_passing then
-      msg = string.format("%s %s\n", pass, suite)
+   if ste_passing then
+      local tst = ste_passed == 1 and "test" or "tests"
+      msg = string.format("%s %d %s in %s\n", pass, ste_passed, tst, ste)
    else
-      msg = string.format("%s %s\n", fail, suite)
+      local tst = ste_failed == 1 and "test" or "tests"
+      msg = string.format("%s %d %s in %s\n", fail, ste_failed, tst, ste)
    end
    io.write(msg)
 end
@@ -74,16 +76,20 @@ end
 local function run_tests (tests)
    local call_source = debug.getinfo(2, 'S').source -- This could fail...
    call_source = call_source:match("[^/]*.lua")
-   local suite_passing = true
+   local ste_passing = true
+   local ste_passed, ste_failed = 0, 0
    io.write(string.format("Running %s\n", call_source))
    for test_name, test_proc in pairs(tests) do
       local test_passing = test_proc()
       if not test_passing then
-         suite_passing = false
+         ste_passing = false
+         ste_failed = ste_failed + 1
+      else
+         ste_passed = ste_passed + 1
       end
       print_test_status(test_name, test_passing)
    end
-   print_suite_status(call_source, suite_passing)
+   print_ste_status(call_source, ste_passed, ste_failed, ste_passing)
 end
 
 -- Public Interface
