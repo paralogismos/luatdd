@@ -90,6 +90,11 @@ local function run_tests (tests)
       print_test_status(test_name, test_passing)
    end
    print_ste_status(call_source, ste_passed, ste_failed, ste_passing)
+   if ste_passing then
+      os.exit(true)
+   else
+      os.exit(false)
+   end
 end
 
 -- Public Interface
