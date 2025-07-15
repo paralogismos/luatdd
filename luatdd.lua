@@ -2,7 +2,7 @@
 -- A simple TDD framework for Lua.
 local M = {}
 
-local RED = "\x1b[91m"
+local RED = "\x1b[31m"
 local GRN = "\x1b[32m"
 local NRM = "\x1b[0m"
 local pass = GRN .. "Passed:" .. NRM
