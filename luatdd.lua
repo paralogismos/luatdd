@@ -40,11 +40,13 @@ end
 
 -- `print_fail(msg)` prints a failing message followed by a newline.
 local function print_test_fail (msg)
+   msg = msg or " - "
    io.write(string.format("....%s %s\n", fail, msg))
 end
 
 -- `print_pass(msg)` prints a passing message followed by a newline.
 local function print_test_pass (msg)
+   msg = msg or " - "
    io.write(string.format("....%s %s\n", pass, msg))
 end
 
