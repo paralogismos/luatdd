@@ -3,7 +3,7 @@
 # A script for monitoring Lua files under TDD.
 #set -e
 
-luatdd_version=0.1.0
+luatdd_version=$(lua -lluatdd -e "print(luatdd.version)")
 file_pattern="*.lua"
 msg="luatdd version $luatdd_version: CTRL-C to quit"
 

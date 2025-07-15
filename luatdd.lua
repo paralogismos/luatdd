@@ -2,17 +2,12 @@
 -- A simple TDD framework for Lua.
 local M = {}
 
-local version = "0.1.0"
+local version = "0.2.0"
 local RED = "\x1b[31m"
 local GRN = "\x1b[32m"
 local NRM = "\x1b[0m"
 local pass = GRN .. "Passed:" .. NRM
 local fail = RED .. "FAILED:" .. NRM
-
--- `version()` is the luatdd version string.
-local function version()
-   return version
-end
 
 -- `deep_equal(a, b)` returns `true` if `a` and `b` are of the same type, and
 -- if `a` and `b` are scalars and compare `==`
