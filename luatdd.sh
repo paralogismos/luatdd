@@ -8,15 +8,8 @@ driver="ex05-07_test.lua"
 msg="CTRL-C to quit"
 
 match_test='_test.lua$'
+all_tests=$(find -type f | grep $match_test | sort)
 
-all_tests=$(find -type f |
-                grep $match_test)
-
-# for test in $all_tests ;
-# do
-#     echo $test
-# done
-            
 test_count=1
 while true
 do
