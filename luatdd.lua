@@ -47,7 +47,7 @@ end
 -- If no error is raised in the function call, then all values
 -- returned from the function call are returned by `catch_errors`.
 -- If `opjp` is `check` and an error is raised in the function call,
--- then the error object is returned.
+-- then the error object is returned (stripped of metadata).
 -- If `objp` is `nocheck` and an error is raised in the funciton call,
 -- then `false` is returned.
 function catch_errors (f, objp, ...)
@@ -56,8 +56,12 @@ function catch_errors (f, objp, ...)
       table.remove(result, 1)
       return table.unpack(result)
    else
-      if objp then return result[2]
-      else return false
+      if objp then
+         -- Strip error message metadata.
+         local _, p = string.find(result[2], ':%d*: ')
+         return string.sub(result[2], p+1)
+      else
+         return false
       end
    end
 end
