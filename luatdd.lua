@@ -1,8 +1,13 @@
 -- luatdd.lua
 -- A simple TDD framework for Lua.
+-- Public
 local M = {}
-
 local version = "0.2.0"
+local err = false
+local check = true
+local nocheck = false
+
+-- Private
 local RED = "\x1b[31m"
 local GRN = "\x1b[32m"
 local NRM = "\x1b[0m"
@@ -13,7 +18,7 @@ local fail = RED .. "FAILED:" .. NRM
 -- if `a` and `b` are scalars and compare `==`
 -- or if `a` and `b` are tables such that every key in `a` occurs in `b` with
 -- the same value, and every key in `b` occurs in `a` with the same value.
-local function deep_equal(a, b)
+local function deep_equal (a, b)
    local ta, tb = type(a), type(b)
    if ta ~= tb then return false end
    if ta == "table" then
@@ -35,6 +40,25 @@ local function deep_equal(a, b)
       end
    else
       return a == b  -- `a` and `b` are not tables: simple comparison.
+   end
+end
+
+-- `catch_errors(f, objp, ...)` calls `f` with arguments `...`.
+-- If no error is raised in the function call, then all values
+-- returned from the function call are returned by `catch_errors`.
+-- If `opjp` is `check` and an error is raised in the function call,
+-- then the error object is returned.
+-- If `objp` is `nocheck` and an error is raised in the funciton call,
+-- then `false` is returned.
+function catch_errors (f, objp, ...)
+   local result = table.pack(pcall(f, ...))
+   if result[1] == true then
+      table.remove(result, 1)
+      return table.unpack(result)
+   else
+      if objp then return result[2]
+      else return false
+      end
    end
 end
 
@@ -100,8 +124,15 @@ local function run_tests (tests)
 end
 
 -- Public Interface
+-- Constants
 M.version = version
+M.err = err
+M.check = check
+M.nocheck = nocheck
+
+-- Functions
 M.deep_equal = deep_equal
+M.catch_errors = catch_errors
 M.run_tests = run_tests
 M.print_test_pass = print_test_pass
 M.print_test_fail = print_test_fail
