@@ -90,11 +90,19 @@ function capture_output(f, ...)
    end
 
    -- Call `f` and save the return values.
-   local r = table.pack(f(...))
+   local r = table.pack(pcall(f, ...))
 
    -- Restore output configuration.
    if save_print then print = save_print end
    io.output(save_defout)
+
+   -- Report attempt to call missing function.
+   if r[1] then
+      table.remove(r, 1)
+   else
+      io.write(string.format("Missing test_proc(): %s", r[2]))
+      r = {}
+   end
 
    tf:flush()
    tf:seek('set')
@@ -146,8 +154,12 @@ local function run_tests (tests)
    local ste_passed, ste_failed = 0, 0
    io.write(string.format("Running %s\n", call_source))
    for test_name, test_proc in pairs(tests) do
-      local test_passing = test_proc()
-      if not test_passing then
+      local ok, test_passing = pcall(test_proc)
+      if not ok then
+         ste_passing = false
+         ste_failed = ste_failed + 1
+         print_test_fail(string.format("Missing test_proc(): %s", test_passing))
+      elseif not test_passing then
          ste_passing = false
          ste_failed = ste_failed + 1
       else
