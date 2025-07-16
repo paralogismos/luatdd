@@ -66,6 +66,42 @@ function catch_errors (f, objp, ...)
    end
 end
 
+-- `capture_output(f, ...)` calls `f` with arguments `...` and returns a string
+-- containing all lines written to default output during the function call,
+-- followed by any values returned by the call to `f`.
+-- Multiple lines written to the output result in a string with newlines delimiting
+-- each individual line, but there is no final newline.
+function capture_output(f, ...)
+   -- Create temporary file to collect output.
+   local tf = io.tmpfile()
+
+   -- Redirect default output.
+   local save_defout = io.output()
+   io.output(tf)
+
+   -- `print` calls `fputs`, so need to wrap this in call to `io.output`,
+   -- but only if default output is `stdout`.
+   local save_print
+   if save_defout == io.stdout then
+      save_print = print
+      print = function (...)
+         io.output():write(...)
+      end
+   end
+
+   -- Call `f` and save the return values.
+   local r = table.pack(f(...))
+
+   -- Restore output configuration.
+   if save_print then print = save_print end
+   io.output(save_defout)
+
+   tf:flush()
+   tf:seek('set')
+   local ls = tf:read('a')
+   return ls, table.unpack(r)
+end
+
 -- `print_fail(msg)` prints a failing message followed by a newline.
 local function print_test_fail (msg)
    msg = msg or " - "
@@ -137,6 +173,7 @@ M.nocheck = nocheck
 -- Functions
 M.deep_equal = deep_equal
 M.catch_errors = catch_errors
+M.capture_output = capture_output
 M.run_tests = run_tests
 M.print_test_pass = print_test_pass
 M.print_test_fail = print_test_fail
