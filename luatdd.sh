@@ -27,7 +27,7 @@ do
     test_count=$((test_count + 1))
 done
 
-attempt_count=0
+attempt_count=1
 pass_count=
 fail_count=
 msg_files=
@@ -57,6 +57,7 @@ do
     msg_pass_files="files"
     msg_fail_files="files"
 
+    printf "\n%s\n" "Attempt: $attempt_count"
     run_tests
 
     if [ $test_count -eq 1 ] ; then msg_files="file" ; fi
@@ -69,7 +70,7 @@ do
         printf "%d failing %s in %d test %s\n" \
                $fail_count $msg_fail_files $test_count $msg_files
     fi
-    printf "%s\n" "Attempt: $attempt_count"
-    printf "%s\n\n" "$msg"
-    watch -d -t -n 1 -p -g "ls -lR $file_pattern" > /dev/null
+
+    printf "\n%s\n" "$msg"
+    watch -d -t -n 1 -p -g "ls -lR --full-time $file_pattern" > /dev/null
 done
