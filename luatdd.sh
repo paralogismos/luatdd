@@ -1,12 +1,22 @@
 #! /usr/bin/env sh
 # luatdd.sh
 # A script for monitoring Lua files under TDD.
-#set -e
-
 luatdd_version=$(lua -lluatdd -e "print(luatdd.version)")
-file_pattern="*.lua"
-msg="luatdd version $luatdd_version: CTRL-C to quit"
+msg="luatdd $luatdd_version: press CTRL-C to quit"
 
+# Trap ^Z and ^\ if `trap` is available.
+# if type trap > /dev/null ; then
+#     trap "run_tests" TSTP  # SIGTSTP
+#     trap "quit" QUIT    # SIGQUIT
+#     msg="press CTRL-Z to force test, CTRL-\ to quit"
+# fi
+
+# quit() {
+#     stty echo
+#     exit 0
+# }
+
+file_pattern="*.lua"
 match_test='_test.lua$'
 all_tests=$(find -type f | grep $match_test | sort)
 
@@ -17,20 +27,16 @@ do
     test_count=$((test_count + 1))
 done
 
-attempt_count=1
+attempt_count=0
 pass_count=
 fail_count=
 msg_files=
 msg_pass_files=
 msg_fail_files=
-while true
-do
-    printf "%s\n" "Attempt: $attempt_count"
-    pass_count=0
-    fail_count=0
-    msg_files="files"
-    msg_pass_files="files"
-    msg_fail_files="files"
+
+# This is run in the loop when watched files change,
+# or when the user signals ^Z for force testing.
+run_tests() {
     for test in $all_tests
     do
         if lua "$test"
@@ -40,6 +46,18 @@ do
             fail_count=$((fail_count + 1))
         fi
     done
+    attempt_count=$((attempt_count + 1))
+}
+
+while true
+do
+    pass_count=0
+    fail_count=0
+    msg_files="files"
+    msg_pass_files="files"
+    msg_fail_files="files"
+
+    run_tests
 
     if [ $test_count -eq 1 ] ; then msg_files="file" ; fi
     if [ $pass_count -eq 1 ] ; then msg_pass_files="file" ; fi
@@ -51,7 +69,7 @@ do
         printf "%d failing %s in %d test %s\n" \
                $fail_count $msg_fail_files $test_count $msg_files
     fi
+    printf "%s\n" "Attempt: $attempt_count"
     printf "%s\n\n" "$msg"
     watch -d -t -n 1 -p -g "ls -lR $file_pattern" > /dev/null
-    attempt_count=$((attempt_count + 1))
 done
