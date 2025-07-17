@@ -14,6 +14,43 @@ local NRM = "\x1b[0m"
 local pass = GRN .. "Passed:" .. NRM
 local fail = RED .. "FAILED:" .. NRM
 
+-- Utility Functions
+
+-- `plural('word', n)` returns 'word' when `n` is 1,
+-- or 'words' for any other value of `n`.
+local function plural(s, n)
+   return n == 1 and s or s .. "s"
+end
+
+-- `table_inspect(t)` prints a readable representation of  table `t`.
+-- This seems like it might be useful, but I'm not sure it belongs in this module.
+-- This function also needs more scrutiny, and maybe a rewrite; at a minimum I'll
+-- probably change the function signature to `(t)`, and define a helper function
+-- to make recursive calls with extra arguments.
+local function table_inspect(t, ...)
+   local depth, parent = ...
+   depth = depth or 0
+   parent = parent or ""
+   for k, v in pairs(t) do
+      if depth > 0 then
+         if type(v) == 'table' then
+            table_inspect(v, depth+1, parent .. string.format("[%s]", k))
+         else
+            io.write(string.format("%s[%s] = %s\n",
+                                   tostring(parent),
+                                   tostring(k),
+                                   tostring(v)))
+         end
+      elseif type(v) == 'table' then
+         table_inspect(v, 1, parent .. string.format("[%s]", k))
+      else
+            io.write(string.format("[%s] = %s\n",
+                                   tostring(k),
+                                   tostring(v)))
+      end
+   end
+end
+
 -- `deep_equal(a, b)` returns `true` if `a` and `b` are of the same type, and
 -- if `a` and `b` are scalars and compare `==`
 -- or if `a` and `b` are tables such that every key in `a` occurs in `b` with
@@ -132,80 +169,66 @@ local function print_test_status (test_name, status)
    io.write(msg)
 end
 
-local function print_ste_status (ste, ste_passed, ste_failed, ste_passing)
+local function print_mod_status (mod, mod_passed, mod_failed, mod_passing)
    local msg
-   if ste_passing then
-      local tst = ste_passed == 1 and "test" or "tests"
-      msg = string.format("%s %d %s in %s\n", pass, ste_passed, tst, ste)
+   if mod_passing then
+      msg = string.format("%s %d %s in %s\n", pass,
+                          mod_passed, plural("test", mod_passed), mod)
    else
-      local tst = ste_failed == 1 and "test" or "tests"
-      msg = string.format("%s %d %s in %s\n", fail, ste_failed, tst, ste)
+      msg = string.format("%s %d %s in %s\n", fail,
+                          mod_failed, plural("test", mod_failed), mod)
    end
    io.write(msg)
 end
 
--- `run_tests(tests)` takes a table of test functions in the form:
+-- `test_module(mod)` takes a table of test functions in the form:
 --   { this_test = function (args) body end, }
 -- as its argument, runs the tests and prints a report.
-local function run_tests (tests)
-   local call_source = debug.getinfo(2, 'S').source -- This could fail...
-   call_source = call_source:match("[^/]*.lua")
-   local ste_passing = true
-   local ste_passed, ste_failed = 0, 0
-   io.write(string.format("Running %s\n", call_source))
-   for test_name, test_proc in pairs(tests) do
+local function test_module (mod, call_site)
+   local call_site = call_site:match("^%.[\\/](.*)%.lua$")
+   local mod_passing = true
+   local mod_passed, mod_failed = 0, 0
+   io.write(string.format("Running %s\n", call_site))
+   for test_name, test_proc in pairs(mod) do
       local ok, test_passing = pcall(test_proc)
       if not ok then
-         ste_passing = false
-         ste_failed = ste_failed + 1
+         mod_passing = false
+         mod_failed = mod_failed + 1
          print_test_fail(string.format("Missing test_proc(): %s", test_passing))
       elseif not test_passing then
-         ste_passing = false
-         ste_failed = ste_failed + 1
+         mod_passing = false
+         mod_failed = mod_failed + 1
       else
-         ste_passed = ste_passed + 1
+         mod_passed = mod_passed + 1
       end
       print_test_status(test_name, test_passing)
    end
-   print_ste_status(call_source, ste_passed, ste_failed, ste_passing)
-   if ste_passing then
-      os.exit(true)
+   print_mod_status(call_site, mod_passed, mod_failed, mod_passing)
+   if mod_passing then
+      -- os.exit(true)
+      return true
    else
-      os.exit(false)
+      -- os.exit(false)
+      return false
    end
 end
 
--- Utility Functions
--- `table_inspect(t)` prints a readable representation of  table `t`.
--- This seems like it might be useful, but I'm not sure it belongs in this module.
--- This function also needs more scrutiny, and maybe a rewrite; at a minimum I'll
--- probably change the function signature to `(t)`, and define a helper function
--- to make recursive calls with extra arguments.
-local function table_inspect(t, ...)
-   local depth, parent = ...
-   depth = depth or 0
-   parent = parent or ""
-   for k, v in pairs(t) do
-      if depth > 0 then
-         if type(v) == 'table' then
-            table_inspect(v, depth+1, parent .. string.format("[%s]", k))
-         else
-            io.write(string.format("%s[%s] = %s\n",
-                                   tostring(parent),
-                                   tostring(k),
-                                   tostring(v)))
-         end
-      elseif type(v) == 'table' then
-         table_inspect(v, 1, parent .. string.format("[%s]", k))
+-- `run_tests(mod)` runs all of the tests in a module
+-- and returns the numbers of passing and failing tests.
+local function run_tests (mods)
+   local pass_count, fail_count = 0, 0
+   for _, mod in ipairs(mods) do
+      if test_module(require(mod)) then
+         pass_count = pass_count + 1
       else
-            io.write(string.format("[%s] = %s\n",
-                                   tostring(k),
-                                   tostring(v)))
+         fail_count = fail_count + 1
       end
    end
+   return pass_count, fail_count
 end
 
 -- Public Interface
+
 -- Constants
 M.version = version
 M.err = err
@@ -214,11 +237,14 @@ M.nocheck = nocheck
 
 -- Functions
 M.deep_equal = deep_equal
+-- M.deftest = deftest
 M.catch_errors = catch_errors
 M.capture_output = capture_output
+M.test_module = test_module
 M.run_tests = run_tests
 M.print_test_pass = print_test_pass
 M.print_test_fail = print_test_fail
+M.plural = plural
 M.table_inspect = table_inspect
 
 return M

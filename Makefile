@@ -1,8 +1,8 @@
 # Makefile for luatdd
 .POSIX:
 
-EXEC=luatdd
-EXT=sh
+EXEC=luawatch
+EXT=lua
 SRC_FILE=$(EXEC).$(EXT)
 
 # Default installation directory.
