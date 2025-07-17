@@ -50,7 +50,7 @@ end
 -- then the error object is returned (stripped of metadata).
 -- If `objp` is `nocheck` and an error is raised in the funciton call,
 -- then `false` is returned.
-function catch_errors (f, objp, ...)
+local function catch_errors (f, objp, ...)
    local result = table.pack(pcall(f, ...))
    if result[1] == true then
       table.remove(result, 1)
@@ -71,7 +71,7 @@ end
 -- followed by any values returned by the call to `f`.
 -- Multiple lines written to the output result in a string with newlines delimiting
 -- each individual line, but there is no final newline.
-function capture_output(f, ...)
+local function capture_output(f, ...)
    -- Create temporary file to collect output.
    local tf = io.tmpfile()
 
@@ -175,6 +175,36 @@ local function run_tests (tests)
    end
 end
 
+-- Utility Functions
+-- `table_inspect(t)` prints a readable representation of  table `t`.
+-- This seems like it might be useful, but I'm not sure it belongs in this module.
+-- This function also needs more scrutiny, and maybe a rewrite; at a minimum I'll
+-- probably change the function signature to `(t)`, and define a helper function
+-- to make recursive calls with extra arguments.
+local function table_inspect(t, ...)
+   local depth, parent = ...
+   depth = depth or 0
+   parent = parent or ""
+   for k, v in pairs(t) do
+      if depth > 0 then
+         if type(v) == 'table' then
+            table_inspect(v, depth+1, parent .. string.format("[%s]", k))
+         else
+            io.write(string.format("%s[%s] = %s\n",
+                                   tostring(parent),
+                                   tostring(k),
+                                   tostring(v)))
+         end
+      elseif type(v) == 'table' then
+         table_inspect(v, 1, parent .. string.format("[%s]", k))
+      else
+            io.write(string.format("[%s] = %s\n",
+                                   tostring(k),
+                                   tostring(v)))
+      end
+   end
+end
+
 -- Public Interface
 -- Constants
 M.version = version
@@ -189,5 +219,6 @@ M.capture_output = capture_output
 M.run_tests = run_tests
 M.print_test_pass = print_test_pass
 M.print_test_fail = print_test_fail
+M.table_inspect = table_inspect
 
 return M
