@@ -185,7 +185,7 @@ end
 --   { this_test = function (args) body end, }
 -- as its argument, runs the tests and prints a report.
 local function test_module (mod, call_site)
-   local call_site = call_site:match("^%.[\\/](.*)%.lua$")
+   local call_site = call_site:match('(.*)%.lua$')
    local mod_passing = true
    local tests_passed, tests_failed = 0, 0
    io.write(string.format("Running %s\n", call_site))
@@ -205,10 +205,8 @@ local function test_module (mod, call_site)
    end
    print_mod_status(call_site, tests_passed, tests_failed, mod_passing)
    if mod_passing then
-      -- os.exit(true)
       return true
    else
-      -- os.exit(false)
       return false
    end
 end
@@ -218,7 +216,8 @@ end
 local function run_tests (mods)
    local pass_count, fail_count = 0, 0
    for _, mod in ipairs(mods) do
-      if test_module(require(mod)) then
+      local m = dofile(mod)
+      if test_module(m, mod) then
          pass_count = pass_count + 1
       else
          fail_count = fail_count + 1

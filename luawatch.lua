@@ -4,7 +4,7 @@
 local tdd = require 'luatdd'
 
 local watch_msg = "press CTRL-C to quit"
-local file_pattern = "*.lua"
+local file_pattern = ".lua$"
 local match_test = "*_test.lua"
 
 -- Get list of test modules.
@@ -12,7 +12,7 @@ local found_tests = io.popen(string.format('find -name "%s"', match_test))
 local test_modules = {}
 for tf in found_tests:lines() do
    test_modules[#test_modules + 1] =
-      string.match(tf, "^%.[\\/](.*)%.lua$")
+      string.match(tf, "^%.[\\/](.*%.lua)$")
 end
 
 local mod_count = #test_modules
@@ -35,6 +35,10 @@ while watching do
    end
    io.write(string.format("\n%s\n", watch_msg))
    watching = os.execute(
-      string.format('watch -d -t -n 1 -p -g "ls -lR --full-time %s" > /dev/null',
-                    file_pattern))
+      string.format('inotifywait -rqq -e modify --include %s .', file_pattern))
 end
+
+-- I can't figure out how to suppress the "^C" when a user quits.
+-- I didn't have this problem with `watch`.
+-- Printing a newline makes is look less stupid.
+print("")
