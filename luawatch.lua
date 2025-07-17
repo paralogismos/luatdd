@@ -26,12 +26,12 @@ while watching do
    attempt_count = attempt_count + 1
 
    io.write(string.format("%d passing %s in %d test %s\n",
-                          pass_count, tdd.plural("file", pass_count),
-                          mod_count, tdd.plural("file", mod_count)))
+                          pass_count, tdd.plural("module", pass_count),
+                          mod_count, tdd.plural("module", mod_count)))
    if fail_count > 0 then
       io.write(string.format("%d failing %s in %d test %s\n",
-                             fail_count, tdd.plural("file", fail_count),
-                             mod_count, tdd.plural("file", mod_count)))
+                             fail_count, tdd.plural("module", fail_count),
+                             mod_count, tdd.plural("module", mod_count)))
    end
    io.write(string.format("\n%s\n", watch_msg))
    watching = os.execute(

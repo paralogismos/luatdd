@@ -169,14 +169,14 @@ local function print_test_status (test_name, status)
    io.write(msg)
 end
 
-local function print_mod_status (mod, mod_passed, mod_failed, mod_passing)
+local function print_mod_status (mod, tests_passed, tests_failed, mod_passing)
    local msg
    if mod_passing then
       msg = string.format("%s %d %s in %s\n", pass,
-                          mod_passed, plural("test", mod_passed), mod)
+                          tests_passed, plural("test", tests_passed), mod)
    else
       msg = string.format("%s %d %s in %s\n", fail,
-                          mod_failed, plural("test", mod_failed), mod)
+                          tests_failed, plural("test", tests_failed), mod)
    end
    io.write(msg)
 end
@@ -187,23 +187,23 @@ end
 local function test_module (mod, call_site)
    local call_site = call_site:match("^%.[\\/](.*)%.lua$")
    local mod_passing = true
-   local mod_passed, mod_failed = 0, 0
+   local tests_passed, tests_failed = 0, 0
    io.write(string.format("Running %s\n", call_site))
    for test_name, test_proc in pairs(mod) do
       local ok, test_passing = pcall(test_proc)
       if not ok then
          mod_passing = false
-         mod_failed = mod_failed + 1
+         tests_failed = tests_failed + 1
          print_test_fail(string.format("Missing test_proc(): %s", test_passing))
       elseif not test_passing then
          mod_passing = false
-         mod_failed = mod_failed + 1
+         tests_failed = tests_failed + 1
       else
-         mod_passed = mod_passed + 1
+         tests_passed = tests_passed + 1
       end
       print_test_status(test_name, test_passing)
    end
-   print_mod_status(call_site, mod_passed, mod_failed, mod_passing)
+   print_mod_status(call_site, tests_passed, tests_failed, mod_passing)
    if mod_passing then
       -- os.exit(true)
       return true
