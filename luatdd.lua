@@ -2,7 +2,7 @@
 -- A simple TDD framework for Lua.
 -- Public
 local M = {}
-local version = "0.2.0"
+local version = "0.3.0"
 local err = false
 local check = true
 local nocheck = false
