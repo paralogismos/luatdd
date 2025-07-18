@@ -3,7 +3,7 @@
 -- Automatically run tests when files change.
 local tdd = require 'luatdd'
 
-local watch_msg = "press CTRL-C to quit"
+local watch_msg = string.format("luatdd %s press CTRL-C to quit", tdd.version)
 local file_pattern = ".lua$"
 local match_test = "*_test.lua"
 
